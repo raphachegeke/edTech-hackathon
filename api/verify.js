@@ -1,4 +1,6 @@
-import jwt from "jsonwebtoken";
+import { MongoClient } from "mongodb";
+
+const client = new MongoClient(process.env.MONGO_URI);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -6,16 +8,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { token } = req.body;
-
-    if (!token) {
-      return res.status(400).json({ error: "Token required" });
+    const { phone, code } = req.body;
+    if (!phone || !code) {
+      return res.status(400).json({ error: "Phone and code required" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.status(200).json({ valid: true, decoded });
+    await client.connect();
+    const db = client.db("loginDB");
+    const users = db.collection("users");
+
+    const user = await users.findOne({ phone });
+    if (!user) return res.status(400).json({ error: "User not found" });
+
+    if (user.verificationCode !== code) {
+      return res.status(400).json({ error: "Invalid code" });
+    }
+
+    await users.updateOne({ phone }, { $set: { verified: true }, $unset: { verificationCode: "" } });
+
+    res.status(200).json({ message: "Phone verified successfully" });
   } catch (err) {
     console.error("Verify error:", err);
-    res.status(401).json({ valid: false, error: "Invalid or expired token" });
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    await client.close();
   }
 }

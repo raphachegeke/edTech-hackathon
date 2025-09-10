@@ -1,33 +1,40 @@
 import { MongoClient } from "mongodb";
-import jwt from "jsonwebtoken";
+import africastalking from "africastalking";
 
 const client = new MongoClient(process.env.MONGO_URI);
+const at = africastalking({
+  apiKey: process.env.AT_API_KEY,
+  username: process.env.AT_USERNAME
+});
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
   try {
-    const { phone, code } = req.body;
-    if (!phone || !code) return res.status(400).json({ error: "Phone and code required" });
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ error: "Phone required" });
 
     await client.connect();
     const db = client.db("loginDB");
     const users = db.collection("users");
 
     const user = await users.findOne({ phone });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) return res.status(400).json({ error: "User not found" });
 
-    if (user.verificationCode !== code) return res.status(401).json({ error: "Invalid code" });
+    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+    await users.updateOne({ phone }, { $set: { verificationCode: newCode } });
 
-    await users.updateOne(
-      { phone },
-      { $set: { verified: true }, $unset: { verificationCode: "" } }
-    );
+    const sms = at.SMS;
+    await sms.send({
+      to: phone,
+      message: `Your new verification code is: ${newCode}`
+    });
 
-    const token = jwt.sign({ phone }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.status(200).json({ message: "Phone verified", token });
+    res.status(200).json({ message: "New code sent" });
   } catch (err) {
-    console.error("Verification error:", err);
+    console.error("Resend error:", err);
     res.status(500).json({ error: "Internal server error" });
   } finally {
     await client.close();
