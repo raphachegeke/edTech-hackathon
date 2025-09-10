@@ -19,6 +19,9 @@ export default async function handler(req, res) {
       password: String
     }));
 
+    const existing = await User.findOne({ username });
+    if (existing) return res.status(400).json({ message: "User already exists" });
+
     const hashed = await bcrypt.hash(password, 10);
     const user = new User({ username, password: hashed });
     await user.save();

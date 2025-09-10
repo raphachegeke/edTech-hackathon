@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 let conn = null;
 async function connectDB() {
@@ -25,7 +26,13 @@ export default async function handler(req, res) {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(400).json({ message: "Wrong password" });
 
-    return res.status(200).json({ message: "Login success" });
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    return res.status(200).json({ message: "Login success", token });
   }
 
   res.status(405).json({ message: "Method Not Allowed" });
