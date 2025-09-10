@@ -95,3 +95,50 @@ document.getElementById("logoutBtn")?.addEventListener("click", () => {
   localStorage.removeItem("token");
   window.location.href = "index.html";
 });
+
+// Forgot Password
+document.getElementById("forgotForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const phone = formatPhone(document.getElementById("forgotPhone").value);
+
+  document.getElementById("loading").style.display = "block";
+
+  const res = await fetch("/api/forgot", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone })
+  });
+
+  const data = await res.json();
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("forgotMessage").innerText = data.message || data.error;
+
+  if (res.ok) {
+    localStorage.setItem("resetPhone", phone);
+    window.location.href = "reset";
+  }
+});
+
+// Reset Password
+document.getElementById("resetForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const phone = localStorage.getItem("resetPhone");
+  const code = document.getElementById("resetCode").value;
+  const newPassword = document.getElementById("newPassword").value;
+
+  document.getElementById("loading").style.display = "block";
+
+  const res = await fetch("/api/reset", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, code, newPassword })
+  });
+
+  const data = await res.json();
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("resetMessage").innerText = data.message || data.error;
+
+  if (res.ok) {
+    window.location.href = "index";
+  }
+});

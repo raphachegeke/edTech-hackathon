@@ -51,7 +51,8 @@ export default async function handler(req, res) {
     const sms = at.SMS;
     await sms.send({
       to: phone,
-      message: `Your verification code is: ${verificationCode}`
+      message: `Your verification code is: ${verificationCode}`,
+      from: "Career Buddy"
     });
 
     res.status(201).json({ message: "Verification code sent via SMS" });
