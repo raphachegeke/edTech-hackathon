@@ -1,0 +1,9 @@
+{
+  "name": "login-app",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "mongoose": "^7.6.1"
+  }
+}
