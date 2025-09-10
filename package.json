@@ -1,10 +1,15 @@
 {
-  "name": "login-app",
+  "name": "phone-auth-app",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Phone number signup, SMS verification, and login system with Africa's Talking + MongoDB + Vercel",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "node index.js"
+  },
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "africastalking": "^0.7.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^7.6.1"
+    "mongodb": "^6.8.0"
   }
 }
