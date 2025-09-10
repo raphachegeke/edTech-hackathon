@@ -1,5 +1,6 @@
 import { MongoClient } from "mongodb";
 import africastalking from "africastalking";
+import bcrypt from "bcryptjs";
 
 const client = new MongoClient(process.env.MONGO_URI);
 
@@ -15,10 +16,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { phone, password } = req.body;
+    let { phone, password } = req.body;
     if (!phone || !password) {
       return res.status(400).json({ error: "Phone and password required" });
     }
+
+    // Hash the password before storing
+    password = await bcrypt.hash(password, 10);
 
     await client.connect();
     const db = client.db("loginDB");
@@ -26,7 +30,6 @@ export default async function handler(req, res) {
 
     let user = await users.findOne({ phone });
 
-    // Generate new code
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     if (!user) {
@@ -38,20 +41,20 @@ export default async function handler(req, res) {
         verificationCode
       });
     } else if (!user.verified) {
-      // Update code for unverified user
+      // Update code and password for unverified user
       await users.updateOne(
         { phone },
-        { $set: { verificationCode, password } } // update password too, in case they retry with new one
+        { $set: { verificationCode, password } }
       );
     } else {
       return res.status(400).json({ error: "Phone already registered and verified" });
     }
 
-    // Send SMS
+    // Send SMS via Career Buddy
     const sms = at.SMS;
     await sms.send({
       to: phone,
-      message: `Your verification code is: ${verificationCode}`,
+      message: `Your Career Buddy verification code is: ${verificationCode}`,
       from: "Career Buddy"
     });
 
