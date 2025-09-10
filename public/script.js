@@ -1,4 +1,4 @@
-js// Handle Signup
+// Handle Signup
 const signupForm = document.getElementById("signupForm");
 if (signupForm) {
   signupForm.addEventListener("submit", async (e) => {
