@@ -139,6 +139,6 @@ document.getElementById("resetForm")?.addEventListener("submit", async (e) => {
   document.getElementById("resetMessage").innerText = data.message || data.error;
 
   if (res.ok) {
-    window.location.href = "index";
+    window.location.href = "login";
   }
 });
